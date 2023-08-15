@@ -3,6 +3,11 @@
 #include <linux/printk.h>
 #include <linux/miscdevice.h>
 
+/**************************************************************************************** 
+ * Definition
+ ****************************************************************************************/
+
+/* L3G4200D register */
 #define WHO_AM_I 0x0F
 #define CTRL_REG1 0x20
 #define CTRL_REG2 0x21
@@ -30,6 +35,10 @@
 #define INT1_TSH_ZL 0x37
 #define INT1_DURATION 0x38
 
+/* ioctl command */
+#define L3G4200D_SWITCH_TO_NORMAL_MODE _IO(99, 1)
+
+
 /**************************************************************************************** 
  * Function Prototype
  ****************************************************************************************/
@@ -37,6 +46,7 @@ static ssize_t l3g4200d_write(struct file *file, const char __user *buf, size_t 
 static ssize_t l3g4200d_read(struct file *file, char __user *buf, size_t len, loff_t *pos);
 static int l3g4200d_open(struct inode *inode, struct file *file);
 static int l3g4200d_close(struct inode *inodep, struct file *filp);
+static long l3g4200d_ioctl(struct file * flip, unsigned int cmd, unsigned long arg);
 
 /**************************************************************************************** 
  * Variable
@@ -47,7 +57,8 @@ static const struct file_operations l3g4200d_fops =
     .write			= l3g4200d_write,
 	.read			= l3g4200d_read,
     .open			= l3g4200d_open,
-    .release		= l3g4200d_close
+    .release		= l3g4200d_close,
+    .unlocked_ioctl = l3g4200d_ioctl
 };
 
 struct miscdevice l3g4200d_device = {
@@ -55,6 +66,8 @@ struct miscdevice l3g4200d_device = {
     .name = "l3g4200d_sensor",
     .fops = &l3g4200d_fops,
 };
+
+struct spi_device *spi_global = NULL;
 
 
 /**************************************************************************************** 
@@ -89,6 +102,47 @@ static int l3g4200d_close(struct inode *inodep, struct file *filp)
     return 0;
 }
 
+static long l3g4200d_ioctl(struct file * flip, unsigned int cmd, unsigned long arg)
+{
+    int ret = -1;
+
+    switch (cmd)
+        case L3G4200D_SWITCH_TO_NORMAL_MODE:
+            
+        default:
+            pr_info("Not support command\n");
+            ret = -1;
+
+    return ret;
+}
+
+/* l3g4200d driver */
+void l3g4200d_write_register(u8 register_address, u8 data_write)
+{
+    struct spi_message msg;
+    struct spi_transfer xfer;
+    u8 tx_buffer[2] = {register_address, data_write};
+    int ret = -1;
+
+    xfer.tx_buf = &tx_buffer[0];
+    xfer.len = sizeof(&tx_buffer[0]);
+
+    spi_message_init(&msg);
+    spi_message_add_tail(&xfer, &msg);
+
+    ret = spi_sync(spi_global, &msg);
+    if(ret != 0)
+    {
+        pr_info("%s %d Failed\n", __func__, __LINE__);
+    }
+
+}
+
+void l3g4200d_init(void)
+{
+
+}
+
 
 /**************************************************************************************** 
  * Function implementation
@@ -113,6 +167,7 @@ static int spi_protocol_example_probe(struct spi_device *spi)
     spi->bits_per_word = 8;
     spi->mode = SPI_MODE_0;
     spi->max_speed_hz = 1000000;
+    spi_global = spi;
 
     ret = spi_setup(spi);
     if(ret != 0)
