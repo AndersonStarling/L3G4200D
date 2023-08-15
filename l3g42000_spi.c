@@ -1,6 +1,7 @@
 #include <linux/module.h>
 #include <linux/spi/spi.h>
 #include <linux/printk.h>
+#include <linux/miscdevice.h>
 
 #define WHO_AM_I 0x0F
 #define CTRL_REG1 0x20
@@ -29,6 +30,70 @@
 #define INT1_TSH_ZL 0x37
 #define INT1_DURATION 0x38
 
+/**************************************************************************************** 
+ * Function Prototype
+ ****************************************************************************************/
+static ssize_t l3g4200d_write(struct file *file, const char __user *buf, size_t len, loff_t *pos);
+static ssize_t l3g4200d_read(struct file *file, char __user *buf, size_t len, loff_t *pos);
+static int l3g4200d_open(struct inode *inode, struct file *file);
+static int l3g4200d_close(struct inode *inodep, struct file *filp);
+
+/**************************************************************************************** 
+ * Variable
+ ****************************************************************************************/
+static const struct file_operations l3g4200d_fops = 
+{
+    .owner			= THIS_MODULE,
+    .write			= l3g4200d_write,
+	.read			= l3g4200d_read,
+    .open			= l3g4200d_open,
+    .release		= l3g4200d_close
+};
+
+struct miscdevice l3g4200d_device = {
+    .minor = MISC_DYNAMIC_MINOR,
+    .name = "l3g4200d_sensor",
+    .fops = &l3g4200d_fops,
+};
+
+
+/**************************************************************************************** 
+ * Static function
+ ****************************************************************************************/
+static ssize_t l3g4200d_write(struct file *file, const char __user *buf, size_t len, loff_t *pos)
+{
+    pr_info("%s %d", __func__, __LINE__);
+
+    return 1;
+}
+
+static ssize_t l3g4200d_read(struct file *file, char __user *buf, size_t len, loff_t *pos)
+{
+    pr_info("%s %d\n", __func__, __LINE__);
+
+    return 0;
+}
+
+static int l3g4200d_open(struct inode *inode, struct file *file)
+{
+
+    pr_info("%s %d\n", __func__, __LINE__);
+
+    return 0;
+}
+
+static int l3g4200d_close(struct inode *inodep, struct file *filp)
+{
+    pr_info("%s %d\n", __func__, __LINE__);
+
+    return 0;
+}
+
+
+/**************************************************************************************** 
+ * Function implementation
+ ****************************************************************************************/
+
 static int spi_protocol_example_probe(struct spi_device *spi) 
 {
     struct spi_message msg;
@@ -36,6 +101,12 @@ static int spi_protocol_example_probe(struct spi_device *spi)
     char tx_buf[2] = {WHO_AM_I | 0x80, 0x00};
     char rx_buf[2] = {0};
     int ret = -1;
+
+    ret = misc_register(&l3g4200d_device);
+    if (ret) {
+        pr_err("can't misc_register\n");
+        return -1;
+    }
 
     pr_info("%s, %d\n", __func__, __LINE__);
 
@@ -60,7 +131,6 @@ static int spi_protocol_example_probe(struct spi_device *spi)
     spi_message_init(&msg);
     spi_message_add_tail(&xfer[0], &msg);
     spi_message_add_tail(&xfer[1], &msg);
-    // spi_message_add_tail(&xfer[1], &msg);
 
     ret = spi_sync(spi, &msg);
     if(ret != 0)
