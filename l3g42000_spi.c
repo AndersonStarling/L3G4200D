@@ -48,6 +48,8 @@ static int l3g4200d_open(struct inode *inode, struct file *file);
 static int l3g4200d_close(struct inode *inodep, struct file *filp);
 static long l3g4200d_ioctl(struct file * flip, unsigned int cmd, unsigned long arg);
 
+u8 l3g4200d_init(void);
+
 /**************************************************************************************** 
  * Variable
  ****************************************************************************************/
@@ -108,11 +110,15 @@ static long l3g4200d_ioctl(struct file * flip, unsigned int cmd, unsigned long a
     int ret = -1;
 
     switch (cmd)
+    {
         case L3G4200D_SWITCH_TO_NORMAL_MODE:
+        ret = l3g4200d_init();
+        break;
             
         default:
             pr_info("Not support command\n");
             ret = -1;
+    }
 
     return ret;
 }
