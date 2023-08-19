@@ -153,10 +153,10 @@ u8 l3g4200d_read_register(u8 register_address)
     int ret = -1;
 
     xfer[0].tx_buf = &tx_buffer[0];
-    xfer[0].len = sizeof(&tx_buffer[0]);
+    xfer[0].len = sizeof(tx_buffer);
 
     xfer[1].rx_buf = &rx_buffer[0];
-    xfer[1].len = sizeof(&rx_buffer[0]);
+    xfer[1].len = sizeof(rx_buffer);
 
     spi_message_init(&msg);
     spi_message_add_tail(&xfer[0], &msg);
@@ -250,8 +250,12 @@ static int spi_protocol_example_probe(struct spi_device *spi)
     return 0;
 }
 
-static int spi_protocol_example_remove(struct spi_device *spi) {
+static int spi_protocol_example_remove(struct spi_device *spi) 
+{
     pr_info("%s, %d\n", __func__, __LINE__);
+
+    misc_deregister(&l3g4200d_device);
+
     return 0;
 }
 
