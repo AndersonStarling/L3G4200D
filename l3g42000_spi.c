@@ -155,13 +155,10 @@ u8 l3g4200d_read_register(u8 register_address)
 
     xfer[0].tx_buf = &tx_buffer[0];
     xfer[0].len = sizeof(tx_buffer);
-
-    xfer[1].rx_buf = &rx_buffer[0];
-    xfer[1].len = sizeof(rx_buffer);
+    xfer[0].rx_buf = &rx_buffer[0];
 
     spi_message_init(&msg);
     spi_message_add_tail(&xfer[0], &msg);
-    spi_message_add_tail(&xfer[1], &msg);
 
     ret = spi_sync(spi_global, &msg);
     if(ret != 0)
@@ -169,7 +166,7 @@ u8 l3g4200d_read_register(u8 register_address)
         pr_info("%s %d Failed\n", __func__, __LINE__);
     }
 
-    return rx_buffer[0];
+    return rx_buffer[1];
 
 }
 
