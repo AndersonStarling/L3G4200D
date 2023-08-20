@@ -2,6 +2,7 @@
 #include <linux/spi/spi.h>
 #include <linux/printk.h>
 #include <linux/miscdevice.h>
+#include <linux/uaccess.h>
 
 /**************************************************************************************** 
  * Definition
@@ -37,6 +38,7 @@
 
 /* ioctl command */
 #define L3G4200D_SWITCH_TO_NORMAL_MODE _IO(99, 1)
+#define L3G4200D_GET_INTERNAL_TEMP     _IOR(99, 2, void *)
 
 
 /**************************************************************************************** 
@@ -51,6 +53,7 @@ static long l3g4200d_ioctl(struct file * flip, unsigned int cmd, unsigned long a
 u8 l3g4200d_init(void);
 void l3g4200d_write_register(u8 register_address, u8 data_write);
 u8 l3g4200d_read_register(u8 register_address);
+u8 l3g4200d_read_internal_temp(void);
 
 /**************************************************************************************** 
  * Variable
@@ -110,11 +113,18 @@ static int l3g4200d_close(struct inode *inodep, struct file *filp)
 static long l3g4200d_ioctl(struct file * flip, unsigned int cmd, unsigned long arg)
 {
     int ret = -1;
+    u8 temp_value = 0;
 
     switch (cmd)
     {
         case L3G4200D_SWITCH_TO_NORMAL_MODE:
             ret = l3g4200d_init();
+            break;
+        case L3G4200D_GET_INTERNAL_TEMP:
+            temp_value = l3g4200d_read_internal_temp();
+            pr_info("temp_value = %d\n", temp_value);
+            copy_to_user((u8 *)arg, &temp_value, 1);
+            ret = 0;
             break;
             
         default:
@@ -189,6 +199,17 @@ u8 l3g4200d_init(void)
     }
 
     return retval;
+}
+
+u8 l3g4200d_read_internal_temp(void)
+{
+    u8 output_temp = 0;
+
+    output_temp = l3g4200d_read_register(OUT_TEMP);
+
+    pr_info("output_temp = %d\n", output_temp);
+
+    return output_temp;
 }
 
 
