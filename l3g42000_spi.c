@@ -114,7 +114,7 @@ static long l3g4200d_ioctl(struct file * flip, unsigned int cmd, unsigned long a
     switch (cmd)
     {
         case L3G4200D_SWITCH_TO_NORMAL_MODE:
-            l3g4200d_init();
+            ret = l3g4200d_init();
             break;
             
         default:
@@ -122,7 +122,7 @@ static long l3g4200d_ioctl(struct file * flip, unsigned int cmd, unsigned long a
             ret = -1;
     }
 
-    return 0;
+    return ret;
 }
 
 /* l3g4200d driver */
@@ -175,17 +175,17 @@ u8 l3g4200d_read_register(u8 register_address)
 u8 l3g4200d_init(void)
 {
     u8 register_value = 0;
-    u8 retval = 1;
+    u8 retval = -1;
 
     l3g4200d_write_register(CTRL_REG1, 0x0F);
     l3g4200d_write_register(CTRL_REG2, 0x00);
     l3g4200d_write_register(CTRL_REG4, 0x00);
 
     register_value = l3g4200d_read_register(STATUS_REG);
-    if(!(register_value & (1 << 3)))
+    if((register_value & (1 << 3)))
     {
-        pr_info("Sensor is in power down mode\n");
-        retval = 1;
+        pr_info("Sensor is in normal mode\n");
+        retval = 0;
     }
 
     return retval;
