@@ -49,6 +49,8 @@ static int l3g4200d_close(struct inode *inodep, struct file *filp);
 static long l3g4200d_ioctl(struct file * flip, unsigned int cmd, unsigned long arg);
 
 u8 l3g4200d_init(void);
+void l3g4200d_write_register(u8 register_address, u8 data_write);
+u8 l3g4200d_read_register(u8 register_address);
 
 /**************************************************************************************** 
  * Variable
@@ -196,11 +198,8 @@ u8 l3g4200d_init(void)
 
 static int spi_protocol_example_probe(struct spi_device *spi) 
 {
-    struct spi_message msg;
-    struct spi_transfer xfer[2] = {0};
-    char tx_buf[2] = {WHO_AM_I | 0x80, 0x00};
-    char rx_buf[2] = {0};
     int ret = -1;
+    u8 reg_val = 0;
 
     ret = misc_register(&l3g4200d_device);
     if (ret) {
@@ -222,27 +221,11 @@ static int spi_protocol_example_probe(struct spi_device *spi)
         return -1;
     }
 
+    reg_val = l3g4200d_read_register(WHO_AM_I);
 
-    xfer[0].tx_buf = tx_buf;
-    xfer[0].len = sizeof(tx_buf);
-
-    xfer[1].rx_buf = rx_buf;
-    xfer[1].len = sizeof(rx_buf);
-
-    spi_message_init(&msg);
-    spi_message_add_tail(&xfer[0], &msg);
-    spi_message_add_tail(&xfer[1], &msg);
-
-    ret = spi_sync(spi, &msg);
-    if(ret != 0)
+    if(reg_val != 0xD3)
     {
-        pr_info("Failed\n");
-        return -1;
-    }
-
-    if(rx_buf[0] != 0xD3)
-    {
-        pr_info("Sensor is not respond. Read value is %d\n", rx_buf[0]);
+        pr_info("Sensor is not respond. Read value is %d\n", reg_val);
     }
 
     return 0;
@@ -273,6 +256,6 @@ static struct spi_driver spi_protocol_example_driver = {
 
 module_spi_driver(spi_protocol_example_driver);
 
-MODULE_AUTHOR("ThinhNH <huuthinh1603@gmail.com>");
+MODULE_AUTHOR("tai.nguyen24816@gmail.com");
 MODULE_DESCRIPTION("SPI module");
 MODULE_LICENSE("GPL v2");
