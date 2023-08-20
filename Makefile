@@ -8,6 +8,7 @@ all:
 	/home/ntai/Linux_Emb/gcc-linaro-6.5.0-2018.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc -o app_l3g4200d app_l3g4200d.c
 clean:
 	make -C $(KERNEL) M=$(PWD) clean
+	rm app_l3g4200d
 
 copy:
 	scp l3g42000_spi.ko debian@192.168.7.2:/home/debian

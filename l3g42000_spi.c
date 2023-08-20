@@ -129,18 +129,14 @@ void l3g4200d_write_register(u8 register_address, u8 data_write)
     struct spi_message msg;
     struct spi_transfer xfer[2] = {0};
     u8 tx_buffer[2] = {register_address, data_write};
-    u8 rx_buffer[2] = {0};
     int ret = -1;
 
     xfer[0].tx_buf = &tx_buffer[0];
     xfer[0].len = sizeof(tx_buffer);
-
-    xfer[1].rx_buf = &rx_buffer[0];
-    xfer[1].len = sizeof(rx_buffer);
+    xfer[0].rx_buf = NULL;
 
     spi_message_init(&msg);
     spi_message_add_tail(&xfer[0], &msg);
-    spi_message_add_tail(&xfer[1], &msg);
 
     ret = spi_sync(spi_global, &msg);
     if(ret != 0)
